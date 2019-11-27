@@ -15,9 +15,8 @@ module.exports = {
 				"**"
 			],
 			aliases:{
-				"POST /users":"users.userRegistration",
+				"POST /registration":"users.userRegistration",
 				"POST /login":"users.userLogin",
-				"POST /tokenVerification":"users.verifyToken"
 			}
 		}],
 

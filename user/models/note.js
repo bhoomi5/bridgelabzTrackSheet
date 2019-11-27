@@ -33,6 +33,9 @@ let userSchema = new mongoose.Schema({
 		min: 6, 
 		max: 12,
 	},
+	stage:{
+		type:String
+	},
 	isVerified:{
 		type:Boolean,
 		default:false

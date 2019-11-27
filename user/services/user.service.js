@@ -9,7 +9,7 @@ const jwt = require("jsonwebtoken");
 module.exports = {
 	name: "users",
 	mixins: [DbService],
-	adapter: new MongooseAdapter("mongodb://localhost/userDb"),
+	adapter: new MongooseAdapter("mongodb://localhost/trackSheetDb"),
 	model: userCollection,
 	/**
 	 * Service settings
@@ -88,12 +88,14 @@ module.exports = {
 				return new Promise((resolve, reject) => {
 					userCollection.findOne({ email: email })
 						.then((user) => {
+							console.log("count",user);
+							
 							this.logger.info("user", user);
 							if (user == null) {
 								reject(new MoleculerError("User is not registered!", 422, "", [{ field: "email", message: "is not regestered user" }]));
 							}
 							else {
-								bcrypt.compare(password, user.password, (err) => {
+								bcrypt.compare(password, user.password, (err,data) => {
 									if (err) {
 										this.logger.info("bycrypt==>error", err);
 									}
@@ -118,14 +120,28 @@ module.exports = {
 							this.logger.info(err);
 						});
 				}).catch((err) => {
-					this.logger.Errors(err);
+					this.logger.info(err);
 				});
 			},
-			/**
+		},
+		verifyToken: {
+			handler(ctx) {
+				return new Promise((resolve,reject)=>{
+					jwt.verify(ctx.params.token, this.settings.JWT_SECRET, (err, decoded) => {
+						if (err)
+							reject({error:"credential doesn't match"});
+						else
+							resolve(decoded);
+					});
+				});
+			}
+		},
+		
+	},
+	/**
 	 * Events
 	 */
-		},
-	},
+
 	events: {
 
 	},
@@ -149,9 +165,7 @@ module.exports = {
 				exp: Math.floor(exp.getTime() / 1000)
 			}, this.settings.JWT_SECRET);
 		},
-		verifyToken(token) {
-			return jwt.verify(token, this.settings.JWT_SECRET);
-		}
+
 	},
 
 	/**
