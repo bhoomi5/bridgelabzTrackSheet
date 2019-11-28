@@ -20,6 +20,11 @@ module.exports = {
 			aliases: {
 				"POST /addTechnology":"sheet.addTechnology",
 				"POST /addStage":"sheet.addStage",
+				"POST /addWeeks":"sheet.addWeeks",
+				"POST /addTasks":"sheet.addTasks",
+				"POST /addStageToTechnology":"sheet.addStageToTechnology",
+				"POST /addWeekToStage":"sheet.addWeeksToStage",
+				"POST /addTasksToWeeks":"sheet.addTasksToWeeks",
 			},
 			cors: true,
 			bodyParsers: {
@@ -59,6 +64,9 @@ module.exports = {
 							reject(err); 
 							return null;
 						});
+				}
+				else{
+					reject({message:"Authentication Issue:"});
 				}
 			});
 		}

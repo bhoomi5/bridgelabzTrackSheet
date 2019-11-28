@@ -95,7 +95,7 @@ module.exports = {
 								reject(new MoleculerError("User is not registered!", 422, "", [{ field: "email", message: "is not regestered user" }]));
 							}
 							else {
-								bcrypt.compare(password, user.password, (err,data) => {
+								bcrypt.compare(password, user.password, (err) => {
 									if (err) {
 										this.logger.info("bycrypt==>error", err);
 									}
