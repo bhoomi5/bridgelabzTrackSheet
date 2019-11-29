@@ -25,7 +25,8 @@ module.exports = {
 				"POST /addStageToTechnology":"sheet.addStageToTechnology",
 				"POST /addWeekToStage":"sheet.addWeeksToStage",
 				"POST /addTasksToWeeks":"sheet.addTasksToWeeks",
-				"POST /getTrackSheet":"sheet.getTrackSheet"
+				"POST /getTrackSheet":"sheet.getTrackSheet",
+				"POST /removeSheet":"sheet.removeSheet"
 			},
 			cors: true,
 			bodyParsers: {
