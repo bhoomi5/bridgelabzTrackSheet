@@ -25,7 +25,7 @@ let stageSchema=new mongoose.Schema({
 		type: String,  
 	},
 	week:[{
-		type: mongoose.Schema.Types.ObjectId,
+		type:  mongoose.Schema.Types.ObjectId,
 		ref: "weekCollection"
 	}]
 },{
@@ -33,11 +33,12 @@ let stageSchema=new mongoose.Schema({
 });
 let weekSchema=new mongoose.Schema({
 	week: {
-		type: String,  
+		type: String,
+		required:true  
 	},
 	task:[{
 		type: mongoose.Schema.Types.ObjectId,
-		ref: "weekCollection"
+		ref: "taskCollection"
 	}]
 },{
 	timestamps: true

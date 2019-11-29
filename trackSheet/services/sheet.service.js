@@ -151,13 +151,13 @@ module.exports = {
 					if (entity.techId) {
 						technologyCollection.find({ _id: entity.techId })
 							.then((findTech) => {
-								console.log("findTech",findTech);
+								console.log("findTech", findTech);
 								if (findTech.length > 0) {
 									let query = { "_id": entity.techId };
 									let updateQuery = { $addToSet: { "stage": entity.stageId } };
 									technologyCollection.findOneAndUpdate(query, updateQuery)
 										.then((updateStage) => {
-											console.log("updateSchema",updateStage);
+											console.log("updateSchema", updateStage);
 											resolve({ message: "successfully added stage to technology", data: updateStage });
 										}).catch((err) => {
 											this.logger.info(err);
@@ -189,15 +189,15 @@ module.exports = {
 					if (entity.stageId) {
 						stageCollection.find({ _id: entity.stageId })
 							.then((findStage) => {
-								console.log("findStage",findStage);
+								console.log("findStage", findStage);
 								if (findStage.length > 0) {
 									let query = { "_id": entity.stageId };
 									let updateQuery = { $addToSet: { "week": entity.weekId } };
-									console.log("query",query,".....",updateQuery);
-									
+									console.log("query", query, ".....", updateQuery);
+
 									stageCollection.findOneAndUpdate(query, updateQuery)
 										.then((updateweek) => {
-											console.log("updateSchema",updateweek);
+											console.log("updateSchema", updateweek);
 											resolve({ message: "successfully added week to stage", data: updateweek });
 										}).catch((err) => {
 											this.logger.info(err);
@@ -229,15 +229,15 @@ module.exports = {
 					if (entity.weekId) {
 						weekCollection.find({ _id: entity.weekId })
 							.then((findWeek) => {
-								console.log("findWeek",findWeek);
+								console.log("findWeek", findWeek);
 								if (findWeek.length > 0) {
 									let query = { "_id": entity.weekId };
 									let updateQuery = { $addToSet: { "task": entity.taskId } };
-									console.log("query",query,".....",updateQuery);
-									
+									console.log("query", query, ".....", updateQuery);
+
 									weekCollection.findOneAndUpdate(query, updateQuery)
 										.then((updateTask) => {
-											console.log("updateSchema",updateTask);
+											console.log("updateSchema", updateTask);
 											resolve({ message: "successfully added week to stage", data: updateTask });
 										}).catch((err) => {
 											this.logger.info(err);
@@ -254,6 +254,32 @@ module.exports = {
 
 			},
 		},
+		getTrackSheet: {
+			params: {
+				Details: {
+					type: "object", props: {
+						techId: { type: "string" },
+					}
+				},
+			},
+			async handler(ctx) {
+				let entity = ctx.params.Details;
+				let tech = await technologyCollection.find({ _id: entity.techId })
+					.populate({
+						path: "stage",
+						populate: {
+							path: "week",
+							model: "weekCollection",
+							populate: {
+								path: "task",
+								model: "taskCollection"
+							}
+						},
+					});
+				console.log("tech", tech);
+				return (tech);
+			},
+		}
 		// deleteTechnology:{
 
 		// },
