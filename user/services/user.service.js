@@ -2,10 +2,18 @@
 require("dotenv").config();
 const DbService = require("moleculer-db");
 const MongooseAdapter = require("moleculer-db-adapter-mongoose");
-const userCollection = require("../models/note");
+const userCollection = require("../models/user");
 const { MoleculerError } = require("moleculer").Errors;
 const bcrypt = require("bcryptjs");
 const jwt = require("jsonwebtoken");
+const redis = require("redis");
+const redisClient = redis.createClient({ host: "localhost", port: 6379 });
+redisClient.on("connected", () => {
+	this.logger.info("Redis Client Is Connected ");
+}).on("error", (err) => {
+	this.logger.error("Redis Client Is Disconnected Due To Some Error " + err);
+	process.exit();
+});
 module.exports = {
 	name: "users",
 	mixins: [DbService],
@@ -55,14 +63,14 @@ module.exports = {
 				let entity = ctx.params.userDetails;
 				return this.validateEntity(entity)
 					.then(() => {
-						return userCollection.findOne({ email: ctx.params.userDetails.email })
+						return userCollection.user.findOne({ email: ctx.params.userDetails.email })
 							.then((user) => {
 								if (user != null) {
 									return Promise.reject(new MoleculerError("User is already exist!", 422, "", [{ field: "email", message: "is already exist" }]));
 								}
 							});
 					}).then(() => {
-						let userDetail = new userCollection({
+						let userDetail = new userCollection.user({
 							"firstName": entity.firstName,
 							"lastName": entity.lastName,
 							"email": entity.email,
@@ -70,6 +78,7 @@ module.exports = {
 						});
 						userDetail.save().then((savedDetails) => {
 							this.logger.info("Registration Done Successfully", savedDetails);
+							return Promise.resolve({message:"registration successfully Done",data:userDetail});
 						});
 					});
 			},
@@ -85,33 +94,40 @@ module.exports = {
 			},
 			handler(ctx) {
 				let { email, password } = ctx.params.userLoginDetails;
+			
 				return new Promise((resolve, reject) => {
-					userCollection.findOne({ email: email })
+					userCollection.user.find({ email: email })
 						.then((user) => {
-							console.log("count",user);
-							
+							console.log("count", user);
+
 							this.logger.info("user", user);
 							if (user == null) {
 								reject(new MoleculerError("User is not registered!", 422, "", [{ field: "email", message: "is not regestered user" }]));
 							}
 							else {
-								bcrypt.compare(password, user.password, (err) => {
+								bcrypt.compare(password, user[0].password, (err) => {
 									if (err) {
 										this.logger.info("bycrypt==>error", err);
 									}
 									else {
 										let response = {
-											"_id": user._id,
-											"firstName": user.firstName,
-											"lastName": user.lastName,
-											"email": user.email
+											"_id": user[0]._id,
+											"firstName": user[0].firstName,
+											"lastName": user[0].lastName,
+											"email": user[0].email
 										};
 										this.logger.info("login successfully...", response);
 										let payload = {
-											email: user.email,
-											_id: user._id
+											email: user[0].email,
+											_id: user[0]._id
 										};
 										let token = this.generateJWT(payload);
+										let key = user[0]._id;
+										let field = "token";
+										let value = token;
+										let status="status";
+										let statusValue=true;
+										redisClient.hmset(key, field, value,status,statusValue);
 										resolve({ message: "successfully logged In", userDetails: response, token: token });
 									}
 								});
@@ -126,17 +142,17 @@ module.exports = {
 		},
 		verifyToken: {
 			handler(ctx) {
-				return new Promise((resolve,reject)=>{
+				return new Promise((resolve, reject) => {
 					jwt.verify(ctx.params.token, this.settings.JWT_SECRET, (err, decoded) => {
 						if (err)
-							reject({error:"credential doesn't match"});
+							reject({ error: "credential doesn't match" });
 						else
 							resolve(decoded);
 					});
 				});
 			}
 		},
-		
+
 	},
 	/**
 	 * Events

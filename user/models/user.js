@@ -49,4 +49,4 @@ let userSchema = new mongoose.Schema({
 
 /** register the schema */
 let userCollection = mongoose.model("userCollection", userSchema);
-module.exports= userCollection ;
+module.exports.user= userCollection ;

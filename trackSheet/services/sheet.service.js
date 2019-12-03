@@ -3,10 +3,16 @@
 const DbService = require("moleculer-db");
 const MongooseAdapter = require("moleculer-db-adapter-mongoose");
 const sheetCollection = require("../models/sheet");
+// const userModel = require("../../user/models/note");
 const technologyCollection = sheetCollection.tech;
 const stageCollection = sheetCollection.stage;
 const weekCollection = sheetCollection.week;
 const taskCollection = sheetCollection.task;
+const redis = require("redis");
+const redisClient = redis.createClient({ host: "localhost", port: 6379 });
+
+// const userCollection = userModel.user;
+
 // const { MoleculerError } = require("moleculer").Errors;
 module.exports = {
 	name: "sheet",
@@ -19,10 +25,10 @@ module.exports = {
 	settings: {
 		entityValidator: {
 			technologyName: { type: "string", validator: "isAlphanumeric" },
-			//stage: { type: "string", validator: "isAlphanumeric" },
-			// week: { type: Number, validator: "isAlphanumeric" },
-			// task: { type: "string", validator: "isAlphanumeric" },
-			userId: { type: "string" }
+			stageId: { type: "string", validator: "isAlphanumeric" },
+			weekId: { type: "number", validator: "isAlphanumeric" },
+			taskId: { type: "string", validator: "isAlphanumeric" },
+			userId: { type: "string", validator: "isAlphanumeric" }
 		}
 	},
 	/**
@@ -48,6 +54,12 @@ module.exports = {
 			},
 			handler(ctx) {
 				let entity = ctx.params.techDetails;
+				let field = "token";
+				redisClient.HGET(ctx.meta.user.id, field, (err, data) => {
+					if (err) console.log(err);
+					else
+						console.log(data);
+				});
 				return new Promise((resolve) => {
 					const sheetDetail = new technologyCollection({
 						"technologyName": entity.technologyName,
@@ -147,6 +159,7 @@ module.exports = {
 			},
 			handler(ctx) {
 				let entity = ctx.params.Details;
+				console.log("ctx", ctx.params);
 				return new Promise((resolve, reject) => {
 					if (entity.techId) {
 						technologyCollection.find({ _id: entity.techId })
@@ -155,7 +168,7 @@ module.exports = {
 								if (findTech.length > 0) {
 									let query = { "_id": entity.techId };
 									let updateQuery = { $addToSet: { "stage": entity.stageId } };
-									technologyCollection.findOneAndUpdate(query, updateQuery)
+									technologyCollection.findOneAndUpdate(query, updateQuery, { new: true })
 										.then((updateStage) => {
 											console.log("updateSchema", updateStage);
 											resolve({ message: "successfully added stage to technology", data: updateStage });
@@ -195,7 +208,7 @@ module.exports = {
 									let updateQuery = { $addToSet: { "week": entity.weekId } };
 									console.log("query", query, ".....", updateQuery);
 
-									stageCollection.findOneAndUpdate(query, updateQuery)
+									stageCollection.findOneAndUpdate(query, updateQuery, { new: true })
 										.then((updateweek) => {
 											console.log("updateSchema", updateweek);
 											resolve({ message: "successfully added week to stage", data: updateweek });
@@ -234,8 +247,7 @@ module.exports = {
 									let query = { "_id": entity.weekId };
 									let updateQuery = { $addToSet: { "task": entity.taskId } };
 									console.log("query", query, ".....", updateQuery);
-
-									weekCollection.findOneAndUpdate(query, updateQuery)
+									weekCollection.findOneAndUpdate(query, updateQuery, { new: true })
 										.then((updateTask) => {
 											console.log("updateSchema", updateTask);
 											resolve({ message: "successfully added week to stage", data: updateTask });
@@ -280,70 +292,132 @@ module.exports = {
 				return (tech);
 			},
 		},
-		removeSheet: {
+		generateTrackSheet: {
 			params: {
 				Details: {
 					type: "object", props: {
 						techId: { type: "string" },
+						stageId: { type: "string" },
+						weekId: { type: "string" },
+						taskId: { type: "string" },
+						// userId: { type: "string" }
 					}
 				},
 			},
-			async handler(ctx){
+			async handler(ctx) {
 				let entity = ctx.params.Details;
-				let tech = await technologyCollection.find({ _id: entity.techId });
-				if(tech.length>0){
-					if(tech[0].stage.length>0)
-					{
-						for(let i=0;i<tech[0].stage.length;i++){
-							let findStage=await stageCollection.find({_id:tech[0].stage[i]});
-							if(findStage.length>0){
-								if(findStage[0].week.length>0){
-									for(let j=0;j<findStage[0].week.length;j++){
-										let findWeek=await weekCollection.find({_id:findStage[0].week[j]});
-										if(findWeek.length>0){
-											if(findWeek[0].task.length>0){
-												for(let k=0;k<findWeek[0].task.length;i++){
-													// let findTask=await weekCollection.find({_id:findWeek[0].task[k]});
-													// let result=weekCollection.update({"_id":findStage[0].week[j]},{$pull:{"_id":findWeek[0].task[k]}});
-												}
-											}
-											else{
-												// weeek is not present 
-											}
-										}
-										else{
-											// weeek is not present 
-										}
-									}
+				let l = Object.keys(entity);
+				if (l.length == 4) {
+					let tech = await technologyCollection.find({ _id: entity.techId });
+					if (tech) {
+						let updateQuery = { $addToSet: { "stage": entity.stageId } };
+						let stage = await technologyCollection.findOneAndUpdate({ "_id": entity.techId }, updateQuery, { new: true });
+						if (stage) {
+							console.log("stage", stage);
+							let updateQuery = { $addToSet: { "week": entity.weekId } };
+							let week = await stageCollection.findOneAndUpdate({ "_id": stage.stage[0] }, updateQuery, { new: true });
+							if (week) {
+								console.log("week", week);
+								let updateQuery = { $addToSet: { "task": entity.taskId } };
+								let task = await weekCollection.findOneAndUpdate({ "_id": week.week[0] }, updateQuery, { new: true });
+								if (task) {
+									return ({ message: "tracksheet generated successfully" });
+								}
+								else {
+									return ({ message: "tracksheet has not generated successfully" });
 								}
 							}
+							else {
+								return ({ message: "weekid is not present" });
+							}
+						}
+						else {
+							return ({ message: "stageid is not present" });
 						}
 					}
+					else {
+						return ({ message: "wrong technology" });
+					}
+				}
+				else {
+					return ({ message: "unsufficient parameter" });
 				}
 			},
 		},
-		// deleteStage:{
-
-		// },
-		// deleteWeek:{
-
-		// },
-		// deleteTask:{
-
-		// },
-		// deleteStageFromTechnology:{
-
-		// },
-		// deleteweekFromStage:{
-
-		// },
-		// deleteTaskFromWeek:{
-
-		// },
-		/**
-	 * Events
-	 */
 	},
+	// removeSheet: {
+	// 	params: {
+	// 		Details: {
+	// 			type: "object", props: {
+	// 				techId: { type: "string" },
+	// 			}
+	// 		},
+	// 	},
+	// 	async handler(ctx){
+	// 		let entity = ctx.params.Details;
+	// 		let tech = await technologyCollection.find({ _id: entity.techId });
+	// 		if(tech.length>0){
+	// 			if(tech[0].stage.length>0)
+	// 			{
+	// 				for(let i=0;i<tech[0].stage.length;i++){
+	// 					let findStage=await stageCollection.find({_id:tech[0].stage[i]});
+	// 					if(findStage.length>0){
+	// 						if(findStage[0].week.length>0){
+	// 							for(let j=0;j<findStage[0].week.length;j++){
+	// 								let findWeek=await weekCollection.find({_id:findStage[0].week[j]});
+	// 								if(findWeek.length>0){
+	// 									if(findWeek[0].task.length>0){
+	// 										for(let k=0;k<findWeek[0].task.length;i++){
+	// 											// let findTask=await weekCollection.find({_id:findWeek[0].task[k]});
+	// 											// let result=weekCollection.update({"_id":findStage[0].week[j]},{$pull:{"_id":findWeek[0].task[k]}});
+	// 										}
+	// 									}
+	// 									else{
+	// 										// weeek is not present 
+	// 									}
+	// 								}
+	// 								else{
+	// 									// weeek is not present 
+	// 								}
+	// 							}
+	// 						}
+	// 					}
+	// 				}
+	// 			}
+	// 		}
+	// 	},
+	// },
+	// deleteStage: {
+	// 	params: {
+	// 		Details: {
+	// 			type: "object", props: {
+	// 				stageId: { type: "string" },
+	// 				weekId: { type: "string" },
+	// 				taskId: { type: "string" },
+	// 				// userId: { type: "string" }
+	// 			}
+	// 		},
+	// },
+	// },
+
+	// deleteWeek:{
+
+	// },
+	// deleteTask:{
+
+	// },
+	// deleteStageFromTechnology:{
+
+	// },
+	// deleteweekFromStage:{
+
+	// },
+	// deleteTaskFromWeek:{
+
+	// },
+	/**
+ * Events
+ */
 	events: {
 	},
 	/**
