@@ -153,7 +153,9 @@ module.exports = {
 				Details: {
 					type: "object", props: {
 						stageId: { type: "string" },
-						techId: { type: "string" }
+						techId: { type: "string" },
+						weekId: { type: "string" },
+						taskId: { type: "string" }
 					}
 				},
 			},
@@ -166,11 +168,22 @@ module.exports = {
 							.then((findTech) => {
 								console.log("findTech", findTech);
 								if (findTech.length > 0) {
-									let query = { "_id": entity.techId };
 									let updateQuery = { $addToSet: { "stage": entity.stageId } };
-									technologyCollection.findOneAndUpdate(query, updateQuery, { new: true })
+									technologyCollection.findOneAndUpdate({ "_id": entity.techId }, updateQuery, { new: true })
 										.then((updateStage) => {
 											console.log("updateSchema", updateStage);
+											ctx.call("sheet.addWeeksToStage", {
+												Details: {
+													stageId: entity.stageId,
+													weekId: entity.weekId
+												}
+											});
+											ctx.call("sheet.addTasksToWeeks", {
+												Details: {
+													taskId: entity.taskId,
+													weekId: entity.weekId
+												}
+											});
 											resolve({ message: "successfully added stage to technology", data: updateStage });
 										}).catch((err) => {
 											this.logger.info(err);
@@ -188,14 +201,6 @@ module.exports = {
 			},
 		},
 		addWeeksToStage: {
-			params: {
-				Details: {
-					type: "object", props: {
-						stageId: { type: "string" },
-						weekId: { type: "string" }
-					}
-				},
-			},
 			handler(ctx) {
 				let entity = ctx.params.Details;
 				return new Promise((resolve, reject) => {
@@ -207,7 +212,6 @@ module.exports = {
 									let query = { "_id": entity.stageId };
 									let updateQuery = { $addToSet: { "week": entity.weekId } };
 									console.log("query", query, ".....", updateQuery);
-
 									stageCollection.findOneAndUpdate(query, updateQuery, { new: true })
 										.then((updateweek) => {
 											console.log("updateSchema", updateweek);
@@ -267,13 +271,6 @@ module.exports = {
 			},
 		},
 		getTrackSheet: {
-			params: {
-				Details: {
-					type: "object", props: {
-						techId: { type: "string" },
-					}
-				},
-			},
 			async handler(ctx) {
 				let entity = ctx.params.Details;
 				let tech = await technologyCollection.find({ _id: entity.techId })
@@ -345,76 +342,7 @@ module.exports = {
 			},
 		},
 	},
-	// removeSheet: {
-	// 	params: {
-	// 		Details: {
-	// 			type: "object", props: {
-	// 				techId: { type: "string" },
-	// 			}
-	// 		},
-	// 	},
-	// 	async handler(ctx){
-	// 		let entity = ctx.params.Details;
-	// 		let tech = await technologyCollection.find({ _id: entity.techId });
-	// 		if(tech.length>0){
-	// 			if(tech[0].stage.length>0)
-	// 			{
-	// 				for(let i=0;i<tech[0].stage.length;i++){
-	// 					let findStage=await stageCollection.find({_id:tech[0].stage[i]});
-	// 					if(findStage.length>0){
-	// 						if(findStage[0].week.length>0){
-	// 							for(let j=0;j<findStage[0].week.length;j++){
-	// 								let findWeek=await weekCollection.find({_id:findStage[0].week[j]});
-	// 								if(findWeek.length>0){
-	// 									if(findWeek[0].task.length>0){
-	// 										for(let k=0;k<findWeek[0].task.length;i++){
-	// 											// let findTask=await weekCollection.find({_id:findWeek[0].task[k]});
-	// 											// let result=weekCollection.update({"_id":findStage[0].week[j]},{$pull:{"_id":findWeek[0].task[k]}});
-	// 										}
-	// 									}
-	// 									else{
-	// 										// weeek is not present 
-	// 									}
-	// 								}
-	// 								else{
-	// 									// weeek is not present 
-	// 								}
-	// 							}
-	// 						}
-	// 					}
-	// 				}
-	// 			}
-	// 		}
-	// 	},
-	// },
-	// deleteStage: {
-	// 	params: {
-	// 		Details: {
-	// 			type: "object", props: {
-	// 				stageId: { type: "string" },
-	// 				weekId: { type: "string" },
-	// 				taskId: { type: "string" },
-	// 				// userId: { type: "string" }
-	// 			}
-	// 		},
-	// },
-	// },
 
-	// deleteWeek:{
-
-	// },
-	// deleteTask:{
-
-	// },
-	// deleteStageFromTechnology:{
-
-	// },
-	// deleteweekFromStage:{
-
-	// },
-	// deleteTaskFromWeek:{
-
-	// },
 	/**
  * Events
  */
