@@ -8,8 +8,8 @@ const technologyCollection = sheetCollection.tech;
 const stageCollection = sheetCollection.stage;
 const weekCollection = sheetCollection.week;
 const taskCollection = sheetCollection.task;
-const redis = require("redis");
-const redisClient = redis.createClient({ host: "localhost", port: 6379 });
+// const redis = require("redis");
+// const redisClient = redis.createClient({ host: "Redis", port: 6379 });
 
 // const userCollection = userModel.user;
 
@@ -17,7 +17,7 @@ const redisClient = redis.createClient({ host: "localhost", port: 6379 });
 module.exports = {
 	name: "sheet",
 	mixins: [DbService],
-	adapter: new MongooseAdapter("mongodb://localhost/trackSheetDb"),
+	adapter: new MongooseAdapter("mongodb://mongo/trackSheetDb"),
 	model: sheetCollection,
 	/**
 	 * Service settings
@@ -54,16 +54,10 @@ module.exports = {
 			},
 			handler(ctx) {
 				let entity = ctx.params.techDetails;
-				let field = "token";
-				redisClient.HGET(ctx.meta.user.id, field, (err, data) => {
-					if (err) console.log(err);
-					else
-						console.log(data);
-				});
 				return new Promise((resolve) => {
 					const sheetDetail = new technologyCollection({
 						"technologyName": entity.technologyName,
-						"userId": ctx.meta.user.id
+						"userId": "5de8e9d88fa4b31fb5341c89"
 					});
 					sheetDetail.save().then((savedDetails) => {
 						this.logger.info(" Done Successfully", savedDetails);
@@ -89,7 +83,7 @@ module.exports = {
 				return new Promise((resolve) => {
 					const stageDetail = new stageCollection({
 						"stage": entity.stage,
-						"userId": ctx.meta.user.id
+						"userId": "5de8e9d88fa4b31fb5341c89"
 					});
 					stageDetail.save().then((savedDetails) => {
 						this.logger.info("Done Successfully", savedDetails);
@@ -113,7 +107,7 @@ module.exports = {
 				return new Promise((resolve) => {
 					const weekDetail = new weekCollection({
 						"week": entity.week,
-						"userId": ctx.meta.user.id
+						"userId": "5de8e9d88fa4b31fb5341c89"
 					});
 					weekDetail.save().then((savedDetails) => {
 						this.logger.info("Done Successfully", savedDetails);
@@ -137,7 +131,7 @@ module.exports = {
 				return new Promise((resolve) => {
 					const taskDetail = new taskCollection({
 						"task": entity.task,
-						"userId": ctx.meta.user.id
+						"userId": "5de8e9d88fa4b31fb5341c89"
 					});
 					taskDetail.save().then((savedDetails) => {
 						this.logger.info("Done Successfully", savedDetails);
@@ -346,17 +340,17 @@ module.exports = {
 	/**
  * Events
  */
-	events: {
-	},
-	/**
-	 * Methods
-	 */
-	methods: {
-		/**
-		 * Generate a JWT token from user entity
-		 * 
-		 * @param {Object} user 
-		 */
-	},
+	// events: {
+	// },
+	// /**
+	//  * Methods
+	//  */
+	// methods: {
+	// 	/**
+	// 	 * Generate a JWT token from user entity
+	// 	 * 
+	// 	 * @param {Object} user 
+	// 	 */
+	// },
 
 };

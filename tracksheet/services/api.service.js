@@ -8,11 +8,11 @@ module.exports = {
 
 	// More info about settings: https://moleculer.services/docs/0.13/moleculer-web.html
 	settings: {
-		port: process.env.PORT || 3000,
+		port: 4001,
 
 		routes: [{
 			path: "/api",
-			authorization: true,
+			// authorization: true,
 			whitelist: [
 				// Access to any actions in all services under "/api" URL
 				"**"
@@ -64,8 +64,8 @@ module.exports = {
 						}).catch(err => {
 							// Ignored because we continue processing if user is not exist
 							this.logger.info(err);
-							reject(err); 
-							return null;
+							return reject(err); 
+						
 						});
 				}
 				else{

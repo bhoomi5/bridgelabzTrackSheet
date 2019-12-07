@@ -5,19 +5,20 @@ services:
   api:
     build:
       context: .
-    image: funDooApi
-    container_name: funDooApi-api
+    image: user
+    container_name: user-api
     env_file: docker-compose.env
     environment:
       SERVICES: api
-      PORT: 3000
+      PORT: 4000
     depends_on:
       - nats
       - redis
+      - mongo
     labels:
       - "traefik.enable=true"
       - "traefik.backend=api"
-      - "traefik.port=3000"
+      - "traefik.port=4000"
       - "traefik.frontend.entryPoints=http"
       - "traefik.frontend.rule=PathPrefix:/"
     networks:
@@ -26,8 +27,8 @@ services:
   greeter:
     build:
       context: .
-    image: funDooApi
-    container_name: funDooApi-greeter
+    image: user
+    container_name: user-greeter
     env_file: docker-compose.env
     environment:
       SERVICES: greeter
@@ -39,6 +40,25 @@ services:
     networks:
       - internal
 
+  user:
+    build:
+      context: .
+    image: user
+    container_name: user-user
+    env_file: docker-compose.env
+    environment:
+      SERVICES: user
+    labels:
+      - "traefik.enable=false"
+    depends_on:
+      - nats
+      - redis
+      - mongo
+    networks:
+      - internal
+
+  
+
   nats:
     image: nats
     labels:
@@ -48,6 +68,13 @@ services:
 
   redis:
     image: redis:alpine
+    labels:
+      - "traefik.enable=false"
+    networks:
+      - internal
+  
+  mongo:
+    image: mongo
     labels:
       - "traefik.enable=false"
     networks:
@@ -65,8 +92,8 @@ services:
       - "traefik.backend=traefik"
       - "traefik.port=8080"
     ports:
-      - 3000:80
-      - 3001:8080
+      - 4000:80
+      - 4003:8080
     volumes:
       - /var/run/docker.sock:/var/run/docker.sock
       - /dev/null:/traefik.toml

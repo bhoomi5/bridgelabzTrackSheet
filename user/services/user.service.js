@@ -6,14 +6,14 @@ const userCollection = require("../models/user");
 const { MoleculerError } = require("moleculer").Errors;
 const bcrypt = require("bcryptjs");
 const jwt = require("jsonwebtoken");
-const redis = require("redis");
-const redisClient = redis.createClient({ host: "localhost", port: 6379 });
-redisClient.on("connected", () => {
-	this.logger.info("Redis Client Is Connected ");
-}).on("error", (err) => {
-	this.logger.error("Redis Client Is Disconnected Due To Some Error " + err);
-	process.exit();
-});
+// const redis = require("redis");
+// const redisClient = redis.createClient({ host: "localhost", port: 6379 });
+// redisClient.on("connected", () => {
+// 	this.logger.info("Redis Client Is Connected ");
+// }).on("error", (err) => {
+// 	this.logger.error("Redis Client Is Disconnected Due To Some Error " + err);
+// 	process.exit();
+// });
 module.exports = {
 	name: "users",
 	mixins: [DbService],
@@ -122,12 +122,12 @@ module.exports = {
 											_id: user[0]._id
 										};
 										let token = this.generateJWT(payload);
-										let key = user[0]._id;
-										let field = "token";
-										let value = token;
-										let status="status";
-										let statusValue=true;
-										redisClient.hmset(key, field, value,status,statusValue);
+										// let key = user[0]._id;
+										// let field = "token";
+										// let value = token;
+										// let status="status";
+										// let statusValue=true;
+										// redisClient.hmset(key, field, value,status,statusValue);
 										resolve({ message: "successfully logged In", userDetails: response, token: token });
 									}
 								});

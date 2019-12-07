@@ -32,10 +32,30 @@ module.exports = {
 
 	// Define transporter. 
 	// More info: https://moleculer.services/docs/0.13/networking.html
-	transporter: "NATS",
+	transporter: {
+		type:"nats",
+		options:{
+			url:process.env.PORT,
+			user:"",
+			pass:""
+		}
+	},
 
 	// Define a cacher. More info: https://moleculer.services/docs/0.13/caching.html
-	cacher: "Redis",
+	cacher: {
+		type:"Redis",
+		options:{
+			ttl:30,
+			monitor:false,
+			redis:{
+				host:process.env.REDIS_HOST,
+				port:6379,
+				password:"",
+				db:0
+			}
+		}
+	},
+
 
 	// Define a serializer. 
 	// Available values: "JSON", "Avro", "ProtoBuf", "MsgPack", "Notepack", "Thrift". 
