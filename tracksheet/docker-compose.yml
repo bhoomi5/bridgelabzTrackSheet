@@ -2,7 +2,7 @@ version: "3.2"
 
 services:
 
-  api:
+  api-tracksheet:
     build:
       context: .
     image: tracksheet
@@ -19,6 +19,28 @@ services:
       - "traefik.enable=true"
       - "traefik.backend=api"
       - "traefik.port=4001"
+      - "traefik.frontend.entryPoints=http"
+      - "traefik.frontend.rule=PathPrefix:/"
+    networks:
+      - internal
+
+  api-user:
+    build:
+      context: ../user
+    image: user
+    container_name: user-api
+    env_file: docker-compose.env
+    environment:
+      SERVICES: api
+      PORT: 4003
+    depends_on:
+      - nats
+      - redis
+      - mongo
+    labels:
+      - "traefik.enable=true"
+      - "traefik.backend=api"
+      - "traefik.port=4003"
       - "traefik.frontend.entryPoints=http"
       - "traefik.frontend.rule=PathPrefix:/"
     networks:
@@ -44,10 +66,27 @@ services:
     build:
       context: .
     image: tracksheet
-    container_name: tracksheet-sheet
+    container_name: tracksheetContainer
     env_file: docker-compose.env
     environment:
       SERVICES: sheet
+    labels:
+      - "traefik.enable=false"
+    depends_on:
+      - nats
+      - redis
+      - mongo
+    networks:
+      - internal
+
+  user:
+    build:
+      context: ../user
+    image: user
+    container_name: userContainer
+    env_file: docker-compose.env
+    environment:
+      SERVICES: user
     labels:
       - "traefik.enable=false"
     depends_on:
@@ -92,6 +131,7 @@ services:
     ports:
       - 4001:80
       - 4002:8080
+      - 4003:80
     volumes:
       - /var/run/docker.sock:/var/run/docker.sock
       - /dev/null:/traefik.toml

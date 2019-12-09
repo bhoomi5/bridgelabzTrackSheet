@@ -17,7 +17,7 @@ const jwt = require("jsonwebtoken");
 module.exports = {
 	name: "users",
 	mixins: [DbService],
-	adapter: new MongooseAdapter("mongodb://localhost/trackSheetDb"),
+	adapter: new MongooseAdapter("mongodb://mongo/trackSheetDb"),
 	model: userCollection,
 	/**
 	 * Service settings
